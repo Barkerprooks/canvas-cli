@@ -78,6 +78,7 @@ def load_driver_cookies(url, session):
 
     return driver
 
+
 def load_course(url, course, driver):
 
     assignments = dict()
@@ -129,7 +130,7 @@ if __name__ == "__main__":
                 print("missing domain (ex: <this part>.instructure.com)")
                 exit(0)
         if token == "-u" or token == "--username":
-            if i + 1 < len(sys.argv) or sys.argv[i + 1][0]:
+            if i + 1 < len(sys.argv) or sys.argv[i + 1][0] != '-':
                 username = sys.argv[i + 1]
             else:
                 print("missing username")
@@ -155,11 +156,11 @@ if __name__ == "__main__":
     print("[>] loading web driver...")
     driver = load_driver_cookies(url, session)
 
-    print("[>] dumping classes...")
+    print("[>] dumping courses...")
     for course in courses:
         print(courses[course])
         assignments = load_course(url, course, driver)
-        for assignment in reversed(sorted(assignments, key=lambda x: assignments[x][1].timestamp())):
+        for assignment in sorted(assignments, key=lambda x: assignments[x][1].timestamp()):
             title, due = assignments[assignment]
             if due.timestamp() > datetime.today().timestamp():
                 print('  ', title, '[%s]' % assignment)
