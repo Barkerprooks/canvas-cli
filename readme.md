@@ -10,14 +10,13 @@ Python 3 is required
 $ pip install -r requirements.txt
 $ ./canvas-cli -u <username> -d <sub domain>
 
-example: ./canvas-cli -d unt -u student01
-         - prints upcoming assignments for student01 who goes to unt
+canvas-cli:
+    --username / -u    Canvas username (required)
+      --domain / -d    Canvas subdomain (required)
+        --help / -h    Prints this page
+         --all / -a    Shows past assignments
 
-options:
-  --username / -u   Canvas username (required)
-    --domain / -d   Canvas sub domain (required)
-       --all / -a   Show past assignments
-      --help / -h   Print this screen
+example: ./canvas-cli -u student01 -d unt
 
 Note: -d is the school name most of the time, 
       it's the 'name' in the url: https://name.instructure.com
