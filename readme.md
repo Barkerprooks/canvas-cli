@@ -1,10 +1,10 @@
 # Canvas Cli v0.0.1
 A way to interface with canvas from the command line.
 
-# Why?
-Because I wanted to practice web scraping, and I always forget when things are due, so here we are.
+## Why?
+I wanted to practice web scraping, plus I always forget when things are due.
 
-# How to Use
+## How to Use
 Python 3 is required  
 ```
 $ pip install -r requirements.txt
