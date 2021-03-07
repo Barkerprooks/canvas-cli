@@ -22,7 +22,7 @@ Note: -d is the school name most of the time,
       it's the 'name' in the url: https://name.instructure.com
 ```
 
-# Future Features
+## Future Features
 + ability to see grades for past assignments 
 + ability to turn in an assignment by supplying a path, class id, and assignment id
 + ability to turn in an assignment by supplying a path and selecting a class and assignment by menu
