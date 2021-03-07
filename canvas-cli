@@ -161,6 +161,9 @@ if __name__ == "__main__":
         assignments = load_course(url, course, driver)
         for assignment in reversed(sorted(assignments, key=lambda x: assignments[x][1].timestamp())):
             title, due = assignments[assignment]
-            if due.timestamp() > datetime.today().timestamp() and "-a" not in sys.argv or "--all" not in sys.argv:
+            if due.timestamp() > datetime.today().timestamp():
+                print('  ', title, '[%s]' % assignment)
+                print('    DUE: ', due)
+            elif "-a" in sys.argv or "--all" in sys.argv:
                 print('  ', title, 'id:', assignment)
-                print('    due: ', due)
+                print('    DUE: ', due)
