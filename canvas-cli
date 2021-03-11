@@ -4,14 +4,16 @@ from selenium import webdriver
 from datetime import datetime
 import requests
 import getpass
+import string
 import time
 import os, sys
 import re
 
 PASS="[\033[1;32m+\033[0m]"
+PROG="[\033[1;34m>\033[0m]"
 FAIL="[\033[1;31mx\033[0m]"
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 THIS_YEAR = datetime.today().year
 
 def extract_auth_token(text):
@@ -88,7 +90,7 @@ def load_course(url, course, driver):
     assignments_url = url + "/courses/" + course + "/assignments/"
 
     driver.get(assignments_url)
-    time.sleep(2)
+    time.sleep(2.5)
     lines = driver.page_source.split('\n')
     for i, line in enumerate(lines):
         if '<a href="' + assignments_url in line: 
@@ -109,6 +111,34 @@ def load_course(url, course, driver):
     return assignments
 
 
+def assignment_info(url, course_id, assignment_id, driver):
+    
+    driver.get(url + "/courses/" + course_id + "/assignments/" + assignment_id)
+    time.sleep(5)
+    lines = driver.page_source.split('\n')
+
+    assignment = {
+        "title": '',
+        "description": '',
+        "downloads": list()
+    }
+
+    for i, line in enumerate(lines):
+        if "title-content" in line:
+            assignment["title"] = lines[i+2].strip()
+        if "description user_content" in line:
+            if len(line.split('<p>')):
+                for part in line.split('<p>')[1:]:
+                    if "instructure_file_holder" not in part:
+                        assignment["description"] += part.split('</p>')[0]
+        if "instructure_file_holder" in line:
+            index = line.find("href")
+            link = line[index:].split('"')[1]
+            download = url + link.split('?')[0] + "/download?download_frd=1"
+            assignment["downloads"].append(download)
+
+    return assignment
+
 if __name__ == "__main__":
 
     if "-h" in sys.argv or "--help" in sys.argv or len(sys.argv) == 1:
@@ -120,6 +150,10 @@ if __name__ == "__main__":
         print("example: %s -u student01 -d unt" % sys.argv[0])
         exit(0)
    
+    if "-v" in sys.argv:
+        print("Canvas Cli -", VERSION)
+        exit(0)
+
     base_domain = "https://%s.instructure.com"
     username = ''
     password = ''
@@ -147,7 +181,7 @@ if __name__ == "__main__":
 
     url = base_domain % domain
 
-    print(PASS, "logging in...")
+    print(PROG, "logging in...")
     session = canvas_login(url, username, password)
    
     if not session:
@@ -156,18 +190,48 @@ if __name__ == "__main__":
 
     print(PASS, "getting course info...")
     courses = enum_courses(url, session)
-    print(PASS, "loading web driver...")
+    print(PROG, "loading web driver...")
     driver = load_driver_cookies(url, session)
+
+    index = 1
+    options = list()
 
     print(PASS, "dumping courses...")
     for course in courses:
-        print("\033[1;32m", courses[course], "\033[0m")
+        print("\033[1;32m", courses[course], "\033[0m", sep='')
         assignments = load_course(url, course, driver)
+        if len(assignments) == 0:
+            print("    \033[1;31mno assignments\033[0m")
         for assignment in sorted(assignments, key=lambda x: assignments[x][1].timestamp()):
             title, due = assignments[assignment]
-            if due.timestamp() > datetime.today().timestamp():
-                print('  \033[1;33m', title, '\033[0m[%s]' % assignment)
-                print('    DUE:', due.strftime("\033[1;32m%m/%d\033[0m at %I:%M%p"))
-            elif "-a" in sys.argv or "--all" in sys.argv:
-                print('  ', title, 'id:', assignment)
-                print('    DUE:', due.strftime("%m/%d at %I:%M%p"))
+            today = datetime.today()
+            if due.timestamp() > today.timestamp() or "-a" in sys.argv or "--all" in sys.argv:
+                until = due.timetuple().tm_yday - today.timetuple().tm_yday
+                if until == 0:
+                    until = "\033[1;31mdue today!\033[0m"
+                else:
+                    until = '(\033[1;34m%s\033[m) days left' % until if until != 1 else '(\033[1;31m%s\033[0m) day left!' % until
+                print('[\033[1;35m%d\033[0m]  \033[1;33m' % index, title, '\033[0m[%s]' % assignment)
+                print('      DUE: %s, %s' % (due.strftime("\033[1;32m%m/%d\033[0m at %I:%M%p"), until))
+                options.append((course, assignment))
+                index += 1
+   
+    i = input("select an assignment by number [1->%d] or type 'q' to quit: " % (index - 1))
+    deny = ''.join([ch for ch in set(string.printable) - set(string.digits)])
+
+    for ch in deny:
+        if i == ch:
+            exit(0)
+    if i != '0':
+        course, assignment = options[int(i) - 1]
+        
+        info = assignment_info(url, course, assignment, driver)
+        print("Title:", info["title"])
+        print("Description:", info["description"])
+        
+        if len(info["downloads"]):
+            choice = input("would you like to download the files? [y/n]: ")
+            if choice.lower() == 'y':
+                for link in info["downloads"]:
+                    print("downloading from link %s..." % link)
+                    driver.get(link)

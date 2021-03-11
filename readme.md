@@ -1,4 +1,4 @@
-# Canvas Cli v0.0.1
+# Canvas Cli v0.0.2
 A way to interface with canvas from the command line.
 
 ## Why?
@@ -22,9 +22,14 @@ Note: -d is the school name most of the time,
       it's the 'name' in the url: https://name.instructure.com
 ```
 
-## Future Features
-+ ability to see grades for past assignments 
-+ ability to turn in an assignment by supplying a path, class id, and assignment id
-+ ability to turn in an assignment by supplying a path and selecting a class and assignment by menu
-+ print user info such as name, groups, unread messages, etc.
-+ show reminders and alerts for assignments close to their due date
+## Features
++ Print all current assignments, their due dates, and how long until they're due
++ View assignment information like title, and description
++ Download assignment files to the current directory
+
+## Upcoming
+- Allow user to supply a new directory for specific assignment downloads
+- See grades for past assignments 
+- Turn in an assignment by supplying a path, class id, and assignment id
+- Turn in an assignment by supplying a path and selecting a class and assignment by menu
+- Print user info such as name, groups, unread messages, etc.
