@@ -2,8 +2,10 @@
 
 from selenium import webdriver
 from datetime import datetime
+import platform
 import requests
 import getpass
+import zipfile
 import string
 import time
 import os, sys
@@ -15,6 +17,20 @@ FAIL="[\033[1;31mx\033[0m]"
 
 VERSION = '0.0.2'
 THIS_YEAR = datetime.today().year
+
+LINUX_DRIVER="bin/linux/chromedriver"
+MACOS_DRIVER="bin/osx/chromedriver"
+MACM1_DRIVER="bin/osx-m1/chromedriver"
+WIN32_DRIVER="bin/windows/chromedriver.exe"
+
+def get_os_driver_path():
+    system = platform.system()
+    if "Darwin" in system:
+        return MACM1_DRIVER if use_m1 else MACOS_DRIVER
+    elif "Windows" in system:
+        return WIN32_DRIVER
+    elif "Linux" in system:
+        return LINUX_DRIVER
 
 def extract_auth_token(text):
     index = text.find("authenticity_token")
@@ -61,12 +77,12 @@ def enum_courses(url, session):
     return courses
 
 
-def load_driver_cookies(url, session):
+def load_driver(url, session, path):
     
     options = webdriver.ChromeOptions()
     options.headless = True
     
-    driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome(options=options, executable_path=path)
     driver.get(url)
     driver.delete_all_cookies()
 
@@ -146,7 +162,8 @@ if __name__ == "__main__":
         print("    --username / -u    Canvas username (required)")
         print("      --domain / -d    Canvas subdomain (required)")
         print("        --help / -h    Prints this page")
-        print("         --all / -a    Shows past assignments", end="\n\n")
+        print("         --all / -a    Shows past assignments")
+        print("use --m1 if running on apple M1 chip", end='\n\n')
         print("example: %s -u student01 -d unt" % sys.argv[0])
         exit(0)
    
@@ -188,10 +205,15 @@ if __name__ == "__main__":
         print(FAIL, "failed to log in")
         exit(0)
 
-    print(PASS, "getting course info...")
+    print(PASS, "success")
+    print(PROG, "getting course info...")
     courses = enum_courses(url, session)
+    
     print(PROG, "loading web driver...")
-    driver = load_driver_cookies(url, session)
+    exe_path = get_os_driver_path()
+    if "--m1" in sys.argv:
+        exe_path = MACM1_DRIVER
+    driver = load_driver(url, session, exe_path)
 
     index = 1
     options = list()
@@ -234,4 +256,6 @@ if __name__ == "__main__":
             if choice.lower() == 'y':
                 for link in info["downloads"]:
                     print("downloading from link %s..." % link)
+                    os.mkdir("downloads") 
                     driver.get(link)
+                    print(driver)
